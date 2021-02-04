@@ -163,9 +163,9 @@ class Player:
             try:
                 data = list(self.conn.recv(BUFFER_SIZE))
                 if not data:
-					raise ClientDisconnectErr(f"Player {self.id} disconnected!")
+			  raise ClientDisconnectErr(f"Player {self.id} disconnected!")
                 if not len(data):
-					continue
+			  continue
                 if data[0]==ControlCodes["JOIN"]:
                     self.join()
                 elif data[0]==ControlCodes["READY"]:
