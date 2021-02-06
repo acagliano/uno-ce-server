@@ -103,6 +103,7 @@ class Game:
         self.direction = 1 if randint(0,1) else -1
         self.drawthis={"count":0, "type":0}
         self.top_card={"value":randint(0, len(Cards)-1), "color":randint(0, len(Colors)-1)}
+        self.prior_card={}
         for player in self.players.keys():
             self.players[player].draw(7)
         self.broadcast_board()
@@ -130,6 +131,22 @@ class Game:
     def broadcast_board(self):
         for p in self.players.keys():
             self.players[p].broadcast_board(self.players)
+            
+    def next_turn(self):
+        self.turn+=self.direction
+        if self.turn<0:
+            self.turn=len(self.players)-1
+        elif self.turn>(len(self.players)-1):
+            self.turn=0
+            
+    def last_turn(self):
+        last_turn=self.turn
+        last_turn-=self.direction
+        if last_turn<0:
+            last_turn=len(self.players)-1
+        elif last_turn>(len(self.players)-1)
+            last_turn=0
+        return last_turn
         
                     
 
@@ -141,7 +158,22 @@ class Player:
         self.server=server
         self.status=StatusCodes["in_lobby"]
         self.cards=[]
-        player.lobby_info()
+        self.lobby_info()
+        
+    def lobby_info(self):
+        # OUT:
+        #   Players in Lobby
+        #   Game Thread Up?
+        #   ID + Status for each person in Lobby
+        odata=[]
+        odata.append(len(self.server.lobby))
+        if not hasattr(self.server, "active"):
+            odata.append(False)
+        else: odata.append(True)
+        for l in self.server.lobby.keys():
+            player=self.server.lobby[l]
+            odata.append(self.id, self.status)
+        self.send([ControlCodes["LOBBY_INFO"]] + odata)
         
     def send(self, data):
         try:
@@ -151,6 +183,8 @@ class Player:
         
     
     def join(self):
+        # OUT:
+        #   Success or Error joining Game
         if hasattr(self.server, "active"):
             if self.server.active:
                 self.send([ControlCodes["JOIN"], ErrorCodes["GAME_IN_PROGRESS"]])
@@ -164,9 +198,14 @@ class Player:
         self.send([ControlCodes["JOIN"], ErrorCodes["NO_GAME_FOUND"]])
         
         
-    def self.broadcast_board(self, players):
+    def broadcast_board(self, players):
+        # OUT:
+        #   Current Turn #
+        #   Current Pile Top Card/Value
+        #   Player Count
+        #   Player ID/Hand Size for all players
         odata=[]
-        odata.append(self.server.turn, self.server.top_card["value"], self.server.top_card["color"])
+        odata.append(self.server.turn, self.server.top_card["value"], self.server.top_card["color"], len(self.server.players))
         for p in players.keys():
             player=players[p]
             odata.append(player.id, len(player.cards))
@@ -176,17 +215,26 @@ class Player:
     def start_turn(self):
         self.refresh_hand()
         if not self.server.drawthis["count"]:
+            # OUT:
+            #   Value/Color Top Card
             self.send([ControlCodes["START_TURN"], self.server.top_card["value"], self.server.top_card["color"]])
             return
         else:
             for c in self.cards:
                 if self.cards[c]["value"] == self.server.drawthis["type"]:
+                    # OUT:
+                    #   Effect CTL code
+                    #   Value of Card you must supply (should only recv this if you can play it)
                     self.send([ControlCodes["EFFECT"], self.server.top_card["value"]])
                     return
             self.draw(self.server.drawthis["count"])
+            self.server.drawthis={"count":0, "type":0}
+            turn.set()
             
             
     def refresh_hand(self):
+        # OUT:
+        #   Value/Color for each card in hand
         odata=[]
         for c in self.cards:
             odata.append(self.cards[c]["value"], self.cards[c]["color"])
@@ -199,6 +247,7 @@ class Player:
             card["value"]=randint(0, len(Cards)-1)
             card["color"]=randint(0, len(Colors)-1)
             self.cards.append(card)
+        self.refresh_hand()
     
     
     def playcard(self, card):
@@ -208,31 +257,40 @@ class Player:
             color==self.server.top_card["color"] or
             value==Cards["WILD"] or
             value==Cards["WILD_DRAW_4"]:
+            self.server.prior_card=self.server.top_card
             self.server.top_card["value"]=value
             self.server.top_card["color"]=color
             if value>9:
                 self.process_effect(value)
+            else: turn.set()
                 
                 
     def process_effect(self, value):
         if value==Cards["SKIP"]:
             self.server.next_turn()
+            turn.set()
         elif value==Cards["REVERSE"]:
             self.server.direction = 1 if self.server.direction==-1 else -1
-            self.server.next_turn()
+            turn.set()
         elif value==Cards["WILD"]:
             self.send([ControlCodes["SELECT_COLOR"]])
         elif value==Cards["DRAW_TWO"]:
             self.server.drawthis["value"]+=2
             self.server.drawthis["type"]=Cards["DRAW_TWO"]
+            turn.set()
         elif value==Cards["WILD_DRAW_4"]:
             self.send([ControlCodes["SELECT_COLOR"]])
             self.server.drawthis["value"]+=4
             self.server.drawthis["type"]=Cards["WILD_DRAW_4"]
         else: return
             
-            
-                
+    def find_card(self, card):
+        color=card["color"]
+        value=card["value"]
+        for c in self.cards:
+            if c["color"]==color or c["value"]==value or c["value"]==Cards["WILD"]:
+                return True
+        return False
                 
     def handle_connection(self):
         self.conn.settimeout(IDLE_TIMEOUT)
@@ -248,11 +306,18 @@ class Player:
                 elif data[0]==ControlCodes["DRAW"]:
                     self.draw(1)
                 elif data[0]==ControlCodes["PLAY"]:
-                    self.playcard()
+                    self.playcard(data[1:])
                 elif data[0]==ControlCodes["CHALLENGE"]:
-                    self.challenge()
+                    last_turn=self.server.last_turn()
+                    last_player=self.server.players[last_player]
+                    if last_player.find_card(self.server.prior_card):
+                        last_player.draw(4)
+                        self.server.drawthis["count"]-=4
+                    else:
+                        self.server.drawthis["count"]+=2
                 elif data[0]==ControlCodes["SELECT_COLOR"]:
-                    self.select_color()
+                    self.server.top_card["color"]=data[1]
+                    turn.set()
             except:
                 print(traceback.format_exc(limit=None, chain=True))
         
