@@ -325,6 +325,11 @@ class Player:
                 elif data[0]==ControlCodes["SELECT_COLOR"]:
                     self.server.top_card["color"]=data[1]
                     turn.set()
+            except ClientDisconnectErr as e:
+                print(e)
+                del self.server.lobby[conn]
+                self.conn.close()
+                break
             except:
                 print(traceback.format_exc(limit=None, chain=True))
         
