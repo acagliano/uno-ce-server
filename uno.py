@@ -21,8 +21,7 @@ ControlCodes={
     "START_TURN":11,
     "EFFECT":12,
     "END_TURN":13,
-    "LOBBY_INFO",14
-    
+    "LOBBY_INFO":14
 }
 # Effect indicates some type of card is in effect in your turn.
 # Start Turn will be proceeded by a valid color or number you can play, but for Draw2 or WildDraw4, your actions will be limited.
@@ -144,7 +143,7 @@ class Game:
         last_turn-=self.direction
         if last_turn<0:
             last_turn=len(self.players)-1
-        elif last_turn>(len(self.players)-1)
+        elif last_turn>(len(self.players)-1):
             last_turn=0
         return last_turn
         
@@ -253,10 +252,7 @@ class Player:
     def playcard(self, card):
         value=card[0]
         color=card[1]
-        if value==self.server.top_card["value"] or
-            color==self.server.top_card["color"] or
-            value==Cards["WILD"] or
-            value==Cards["WILD_DRAW_4"]:
+        if value==self.server.top_card["value"] or color==self.server.top_card["color"] or value==Cards["WILD"] or value==Cards["WILD_DRAW_4"]:
             self.server.prior_card=self.server.top_card
             self.server.top_card["value"]=value
             self.server.top_card["color"]=color
@@ -294,7 +290,7 @@ class Player:
                 
     def handle_connection(self):
         self.conn.settimeout(IDLE_TIMEOUT)
-		while self.server.online:
+	while self.server.online:
             try:
                 data = list(self.conn.recv(BUFFER_SIZE))
                 if not data:
