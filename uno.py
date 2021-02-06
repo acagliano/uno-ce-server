@@ -112,7 +112,7 @@ class Game:
         self.room["active"]=True
         self.players={}
         ct=0
-        keys = self.lobby.keys():
+        keys = self.lobby.keys()
         for k in keys:
             self.players[k]=self.lobby[k]
             del self.lobby[k]
