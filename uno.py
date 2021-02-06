@@ -82,11 +82,12 @@ class Game:
                     conn, addr = self.sock.accept()
                     print(f"Got new client from {addr}")
                     self.lobby[conn] = player = Player(len(self.players), conn, addr, self)
+                    player.lobby_info()
                     conn_thread = threading.Thread(target=player.handle_connection)
                     conn_thread.start()
                 except KeyboardInterrupt:
                     self.online=False
-                    pass
+                    break
                 except:
                     print(traceback.format_exc(limit=None, chain=True))
         except:
@@ -158,7 +159,6 @@ class Player:
         self.server=server
         self.status=StatusCodes["in_lobby"]
         self.cards=[]
-        self.lobby_info()
         
     def lobby_info(self):
         # OUT:
