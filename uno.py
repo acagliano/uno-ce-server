@@ -64,6 +64,9 @@ ErrorCodes={
     "PLAYER_LIMIT":3
 }
 
+class ClientDisconnectErr(Exception):
+    pass
+
 class Game:
     def __init__(self):
         try:
