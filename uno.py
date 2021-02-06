@@ -81,6 +81,7 @@ class Game:
                 try:
                     self.sock.listen(1)
                     conn, addr = self.sock.accept()
+                    print(f"Got new client from {addr}")
                     self.lobby[conn] = player = Player(len(self.players), conn, addr, self)
                     conn_thread = threading.Thread(target=player.handle_connection)
                     conn_thread.start()
@@ -177,6 +178,7 @@ class Player:
         
     def send(self, data):
         try:
+            print(f"sending packet: {data}")
             bytes_sent = self.conn.send(bytes(data))
         except:
             print(traceback.format_exc(limit=None, chain=True))
