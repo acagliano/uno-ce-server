@@ -84,7 +84,7 @@ class Game:
                     self.sock.listen(1)
                     conn, addr = self.sock.accept()
                     print(f"Got new client from {addr}")
-                    self.lobby[conn] = player = Player(len(self.players), conn, addr, self)
+                    self.lobby[conn] = player = Player(len(self.lobby), conn, addr, self)
                     player.lobby_info()
                     conn_thread = threading.Thread(target=player.handle_connection)
                     conn_thread.start()
