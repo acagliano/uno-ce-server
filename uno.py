@@ -327,7 +327,7 @@ class Player:
                     turn.set()
             except ClientDisconnectErr as e:
                 print(e)
-                del self.server.lobby[conn]
+                del self.server.lobby[self.conn]
                 self.conn.close()
                 break
             except:
