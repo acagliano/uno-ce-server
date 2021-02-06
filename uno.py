@@ -178,7 +178,7 @@ class Player:
     def send(self, data):
         try:
             print(f"sending packet: {data}")
-            bytes_sent = self.conn.send(bytes(data))
+            bytes_sent = self.conn.send(bytes(data[0:]))
         except:
             print(traceback.format_exc(limit=None, chain=True))
         
