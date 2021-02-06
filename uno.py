@@ -318,4 +318,6 @@ class Player:
                 print(traceback.format_exc(limit=None, chain=True))
         
     
-        
+if __name__ == '__main__':
+	
+	server = Game()
