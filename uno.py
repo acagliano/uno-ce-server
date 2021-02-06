@@ -296,7 +296,6 @@ class Player:
         return False
                 
     def handle_connection(self):
-        self.conn.settimeout(IDLE_TIMEOUT)
         while self.server.online:
             try:
                 data = list(self.conn.recv(BUFFER_SIZE))
