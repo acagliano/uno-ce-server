@@ -166,13 +166,13 @@ class Player:
         #   Game Thread Up?
         #   ID + Status for each person in Lobby
         odata=[]
-        odata.append(len(self.server.lobby))
+        odata.append([len(self.server.lobby)])
         if not hasattr(self.server, "active"):
-            odata.append(False)
-        else: odata.append(True)
+            odata.append([False])
+        else: odata.append([True])
         for l in self.server.lobby.keys():
             player=self.server.lobby[l]
-            odata.append(self.id, self.status)
+            odata.append([self.id, self.status])
         self.send([ControlCodes["LOBBY_INFO"]] + odata)
         
     def send(self, data):
@@ -206,10 +206,10 @@ class Player:
         #   Player Count
         #   Player ID/Hand Size for all players
         odata=[]
-        odata.append(self.server.turn, self.server.top_card["value"], self.server.top_card["color"], len(self.server.players))
+        odata.append([self.server.turn, self.server.top_card["value"], self.server.top_card["color"], len(self.server.players)])
         for p in players.keys():
             player=players[p]
-            odata.append(player.id, len(player.cards))
+            odata.append([player.id, len(player.cards)])
         self.send([ControlCodes["REFRESH_BOARD"]] + odata)
     
     
@@ -238,7 +238,7 @@ class Player:
         #   Value/Color for each card in hand
         odata=[]
         for c in self.cards:
-            odata.append(self.cards[c]["value"], self.cards[c]["color"])
+            odata.append([self.cards[c]["value"], self.cards[c]["color"]])
         self.send([ControlCodes["REFRESH_HAND"]] + odata)
         
         
