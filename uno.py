@@ -343,7 +343,7 @@ class Player:
                     self.server.top_card["color"]=data[1]
                     turn.set()
                 else:
-                    raise ClientDisconnectErr(f"{self.addr[0] sent an invalid packet")
+                    raise ClientDisconnectErr(f"{self.addr[0]} sent an invalid packet")
                     break
             except ClientDisconnectErr as e:
                 print(e)
