@@ -3,6 +3,8 @@ import socket,threading,ctypes,hashlib,json,os,sys,time,math,traceback,re,ipaddr
 PORT=51000
 IDLE_TIMEOUT=60
 BUFFER_SIZE=1024
+MIN_PLAYERS=2
+MAX_PLAYERS=8
 
 turn=threading.Event()
 
@@ -85,7 +87,11 @@ class Game:
                     conn, addr = self.sock.accept()
                     print(f"Got new client from {addr}")
                     self.lobby[conn] = player = Player(len(self.lobby), conn, addr, self)
-                    player.lobby_info()
+                    if len(self.lobby)>=MIN_PLAYERS and not hasattr(self, "active"):
+                        game_thread = threading.Thread(target=self.start_game)
+                        game_thread.start()
+                    for p in self.lobby.keys():
+                        self.lobby[p].lobby_info()
                     conn_thread = threading.Thread(target=player.handle_connection)
                     conn_thread.start()
                 except KeyboardInterrupt:
@@ -100,9 +106,19 @@ class Game:
     def start_game(self):
         direction=randint(0,1)
         self.active=False
-        self.players={}
+        for p in self.lobby.keys():
+            self.lobby[p].alert("Game starting in 30 seconds...")
         time.sleep(30)
         self.room["active"]=True
+        self.players={}
+        ct=0
+        keys = self.lobby.keys():
+        for k in keys:
+            self.players[k]=self.lobby[k]
+            del self.lobby[k]
+            ct+=1
+            if ct>=8: break
+            
         self.turn=randint(0,len(self.players)-1)
         self.direction = 1 if randint(0,1) else -1
         self.drawthis={"count":0, "type":0}
@@ -122,6 +138,7 @@ class Game:
                 break
         self.declare_winner(uno)
         self.send_all_to_lobby()
+        delattr(self, "active")
         
     def is_uno(self):
         ct=0
@@ -175,6 +192,9 @@ class Player:
         else: odata.append(True)
         self.send([ControlCodes["LOBBY_INFO"]] + odata)
         
+    def alert(self,msg):
+        self.send([ControlCodes["MSG"]]+list(msg))
+        
     def send(self, data):
         try:
             print(f"sending packet: {data}")
@@ -206,10 +226,11 @@ class Player:
         #   Player Count
         #   Player ID/Hand Size for all players
         odata=[]
+        odata.append(len(self.server.players))
         odata.append(self.server.turn)
+        odata.append(self.server.direction)
         odata.append(self.server.top_card["value"])
         odata.append(self.server.top_card["color"])
-        odata.append(len(self.server.players))
         for p in players.keys():
             player=players[p]
             odata.append(player.id)
@@ -241,6 +262,7 @@ class Player:
         # OUT:
         #   Value/Color for each card in hand
         odata=[]
+        odata.append(len(self.cards))
         for c in self.cards:
             odata.append(self.cards[c]["value"])
             odata.append(self.cards[c]["color"])
@@ -320,6 +342,9 @@ class Player:
                 elif data[0]==ControlCodes["SELECT_COLOR"]:
                     self.server.top_card["color"]=data[1]
                     turn.set()
+                else:
+                    raise ClientDisconnectErr(f"{self.addr[0] sent an invalid packet")
+                    break
             except ClientDisconnectErr as e:
                 print(e)
                 del self.server.lobby[self.conn]
