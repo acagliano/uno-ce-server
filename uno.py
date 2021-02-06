@@ -290,32 +290,32 @@ class Player:
                 
     def handle_connection(self):
         self.conn.settimeout(IDLE_TIMEOUT)
-	while self.server.online:
-		try:
-			data = list(self.conn.recv(BUFFER_SIZE))
-			if not data:
-				raise ClientDisconnectErr(f"Player {self.id} disconnected!")
-			if not len(data):
-				continue
-			if data[0]==ControlCodes["JOIN"]:
-				self.join()
-			elif data[0]==ControlCodes["DRAW"]:
-				self.draw(1)
-			elif data[0]==ControlCodes["PLAY"]:
-				self.playcard(data[1:])
-			elif data[0]==ControlCodes["CHALLENGE"]:
-				last_turn=self.server.last_turn()
-				last_player=self.server.players[last_player]
-				if last_player.find_card(self.server.prior_card):
-					last_player.draw(4)
-					self.server.drawthis["count"]-=4
-				else:
-					self.server.drawthis["count"]+=2
-			elif data[0]==ControlCodes["SELECT_COLOR"]:
-				self.server.top_card["color"]=data[1]
-				turn.set()
-		except:
-			print(traceback.format_exc(limit=None, chain=True))
+        while self.server.online:
+            try:
+                data = list(self.conn.recv(BUFFER_SIZE))
+                if not data:
+                    raise ClientDisconnectErr(f"Player {self.id} disconnected!")
+                if not len(data):
+                    continue
+                if data[0]==ControlCodes["JOIN"]:
+                    self.join()
+                elif data[0]==ControlCodes["DRAW"]:
+                    self.draw(1)
+                elif data[0]==ControlCodes["PLAY"]:
+                    self.playcard(data[1:])
+                elif data[0]==ControlCodes["CHALLENGE"]:
+                    last_turn=self.server.last_turn()
+                    last_player=self.server.players[last_player]
+                    if last_player.find_card(self.server.prior_card):
+                        last_player.draw(4)
+                        self.server.drawthis["count"]-=4
+                    else:
+                        self.server.drawthis["count"]+=2
+                elif data[0]==ControlCodes["SELECT_COLOR"]:
+                    self.server.top_card["color"]=data[1]
+                    turn.set()
+            except:
+                print(traceback.format_exc(limit=None, chain=True))
         
     
         
