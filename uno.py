@@ -175,8 +175,8 @@ class Player:
         else: odata.append(True)
         for l in self.server.lobby.keys():
             player=self.server.lobby[l]
-            odata.append(self.id)
-            odata.append(self.status)
+            odata.append(player.id)
+            odata.append(player.status)
         self.send([ControlCodes["LOBBY_INFO"]] + odata)
         
     def send(self, data):
